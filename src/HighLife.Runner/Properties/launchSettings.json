@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "HighLife.Runner": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

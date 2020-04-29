@@ -10,7 +10,7 @@ namespace HighLife.StreamAnnouncer.Service.Discord
         private readonly DiscordSocketClient _client;
         private readonly ILogger _logger;
 
-        public DiscordBot(DiscordSocketClient client, ILogger logger)
+        public DiscordBot(DiscordSocketClient client, ILogger<DiscordBot> logger)
         {
             _client = client;
             _logger = logger;
@@ -30,23 +30,23 @@ namespace HighLife.StreamAnnouncer.Service.Discord
             switch (logMessage.Severity)
             {
                 case LogSeverity.Critical:
-                    _logger.Fatal(logMessage.ToString());
+                    _logger.LogCritical(logMessage.ToString());
                     break;
                 case LogSeverity.Error:
-                    _logger.Error(logMessage.ToString());
+                    _logger.LogError(logMessage.ToString());
                     break;
                 case LogSeverity.Warning:
-                    _logger.Warning(logMessage.ToString());
+                    _logger.LogWarning(logMessage.ToString());
                     break;
                 case LogSeverity.Info:
-                    _logger.Information(logMessage.ToString());
+                    _logger.LogInformation(logMessage.ToString());
                     break;
                 case LogSeverity.Verbose:
                 case LogSeverity.Debug:
-                    _logger.Debug(logMessage.ToString());
+                    _logger.LogDebug(logMessage.ToString());
                     break;
                 default:
-                    _logger.Fatal(logMessage.ToString());
+                    _logger.LogCritical(logMessage.ToString());
                     break;
             }
 

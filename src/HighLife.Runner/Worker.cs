@@ -11,9 +11,9 @@ namespace HighLife.Runner
 {
     public class Worker : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
         private readonly IDiscordBot _discordBot;
         private readonly DiscordSocketClient _discordSocketClient;
+        private readonly ILogger<Worker> _logger;
         private readonly Settings _settings;
 
         public Worker(ILogger<Worker> logger, IOptions<Settings> settings, IDiscordBot discordBot,
@@ -50,6 +50,8 @@ namespace HighLife.Runner
 
             // Wait for all connectable services to be ready
             mre.WaitOne();
+
+            await Task.Delay(Timeout.Infinite, stoppingToken);
         }
     }
 }

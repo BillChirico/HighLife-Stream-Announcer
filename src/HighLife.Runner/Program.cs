@@ -1,4 +1,6 @@
+using Discord.WebSocket;
 using HighLife.StreamAnnouncer.Domain.Settings;
+using HighLife.StreamAnnouncer.Service.Discord;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,17 +23,21 @@ namespace HighLife.Runner
 
                     // Settings
                     services.Configure<Settings>(GetSettingsFile("appsettings.json", "Settings"));
+
+                    // Discord
+                    services.AddSingleton<IDiscordBot, DiscordBot>();
+                    services.AddSingleton<DiscordSocketClient>();
                 });
         }
 
         private static IConfigurationSection GetSettingsFile(string file, string section)
         {
-            var builder = new ConfigurationBuilder();
+            ConfigurationBuilder builder = new ConfigurationBuilder();
 
             builder
                 .AddJsonFile(file, false, true);
 
-            var configuration = builder.Build();
+            IConfigurationRoot configuration = builder.Build();
 
             return configuration.GetSection(section);
         }

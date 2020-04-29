@@ -6,10 +6,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Discord.Net" Version="2.3.0-dev-20200425.1"/>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.1"/>
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\HighLife.StreamAnnouncer.Service\HighLife.StreamAnnouncer.Service.csproj"/>
         <ProjectReference Include="..\HighLife.StreamAnnouncer.Domain\HighLife.StreamAnnouncer.Domain.csproj"/>
     </ItemGroup>
 </Project>

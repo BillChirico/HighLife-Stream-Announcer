@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HighLife.Runner", "src\High
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HighLife.StreamAnnouncer.Domain", "src\HighLife.StreamAnnouncer.Domain\HighLife.StreamAnnouncer.Domain.csproj", "{0086ADE6-264E-43F4-9AC1-A9CA15391165}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HighLife.StreamAnnouncer.Service", "HighLife.StreamAnnouncer.Service\HighLife.StreamAnnouncer.Service.csproj", "{4B1627CC-0069-4B70-BED2-EE7684882D3A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HighLife.StreamAnnouncer.Service", "src/HighLife.StreamAnnouncer.Service\HighLife.StreamAnnouncer.Service.csproj", "{4B1627CC-0069-4B70-BED2-EE7684882D3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

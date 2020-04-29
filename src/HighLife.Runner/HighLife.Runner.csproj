@@ -11,7 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\HighLife.StreamAnnouncer.Service\HighLife.StreamAnnouncer.Service.csproj"/>
         <ProjectReference Include="..\HighLife.StreamAnnouncer.Domain\HighLife.StreamAnnouncer.Domain.csproj"/>
+        <ProjectReference Include="..\HighLife.StreamAnnouncer.Service\HighLife.StreamAnnouncer.Service.csproj"/>
     </ItemGroup>
 </Project>

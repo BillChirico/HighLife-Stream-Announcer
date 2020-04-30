@@ -1,5 +1,6 @@
 using Discord.WebSocket;
 using HighLife.StreamAnnouncer.Domain.Settings;
+using HighLife.StreamAnnouncer.Repository;
 using HighLife.StreamAnnouncer.Service.Discord;
 using HighLife.StreamAnnouncer.Service.Twitch;
 using JsonFlatFileDataStore;
@@ -37,8 +38,12 @@ namespace HighLife.Runner
                             provider.GetRequiredService<IOptions<Settings>>().Value.TwitchClientId,
                             provider.GetRequiredService<IOptions<Settings>>().Value.TwitchAccessToken));
 
-                    services.AddSingleton<IDataStore>(new DataStore("Database/Database.json", keyProperty: "id",
+                    // Database
+                    services.AddSingleton<IDataStore>(new DataStore("Database.json", keyProperty: "id",
                         reloadBeforeGetCollection: true));
+
+                    // Repositories
+                    services.AddSingleton(typeof(IDataStoreRepository<>), typeof(DataStoreRepository<>));
                 });
         }
 

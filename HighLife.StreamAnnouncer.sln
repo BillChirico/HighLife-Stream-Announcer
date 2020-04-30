@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HighLife.StreamAnnouncer.Do
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HighLife.StreamAnnouncer.Service", "src/HighLife.StreamAnnouncer.Service\HighLife.StreamAnnouncer.Service.csproj", "{4B1627CC-0069-4B70-BED2-EE7684882D3A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HighLife.StreamAnnouncer.Data", "src\HighLife.StreamAnnouncer.Data\HighLife.StreamAnnouncer.Data.csproj", "{039F1F73-514F-468D-B019-014A5F5664D9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HighLife.StreamAnnouncer.Repository", "src\HighLife.StreamAnnouncer.Repository\HighLife.StreamAnnouncer.Repository.csproj", "{039F1F73-514F-468D-B019-014A5F5664D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,3 +1,4 @@
+using System;
 using Discord.WebSocket;
 using HighLife.StreamAnnouncer.Domain.Settings;
 using HighLife.StreamAnnouncer.Repository;
@@ -52,7 +53,11 @@ namespace HighLife.Runner
             ConfigurationBuilder builder = new ConfigurationBuilder();
 
             builder
-                .AddJsonFile(file, false, true);
+                .AddJsonFile(
+                    Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Production"
+                        ? "appsettings.json"
+                        : "appsettings.Development.json", false,
+                    true);
 
             IConfigurationRoot configuration = builder.Build();
 

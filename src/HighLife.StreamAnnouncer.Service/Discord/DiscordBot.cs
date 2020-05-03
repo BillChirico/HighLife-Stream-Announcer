@@ -8,7 +8,7 @@ namespace HighLife.StreamAnnouncer.Service.Discord
     public class DiscordBot : IDiscordBot
     {
         private readonly DiscordSocketClient _client;
-        private readonly ILogger _logger;
+        private readonly ILogger<DiscordBot> _logger;
 
         public DiscordBot(DiscordSocketClient client, ILogger<DiscordBot> logger)
         {

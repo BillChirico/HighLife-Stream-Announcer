@@ -10,4 +10,8 @@
         <PackageReference Include="TwitchLib.Api" Version="3.0.6-CI-20200107-060234"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\HighLife.StreamAnnouncer.Domain\HighLife.StreamAnnouncer.Domain.csproj"/>
+    </ItemGroup>
+
 </Project>

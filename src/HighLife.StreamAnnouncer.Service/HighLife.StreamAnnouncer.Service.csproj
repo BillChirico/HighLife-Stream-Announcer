@@ -12,6 +12,11 @@
 
     <ItemGroup>
         <ProjectReference Include="..\HighLife.StreamAnnouncer.Domain\HighLife.StreamAnnouncer.Domain.csproj"/>
+        <ProjectReference Include="..\HighLife.StreamAnnouncer.Repository\HighLife.StreamAnnouncer.Repository.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Modules"/>
     </ItemGroup>
 
 </Project>

@@ -10,6 +10,6 @@
 
         public string TwitchClientId { get; set; }
 
-        public string TwitchAccessToken { get; set; }
+        public string TwitchClientSecret { get; set; }
     }
 }

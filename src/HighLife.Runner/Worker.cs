@@ -5,6 +5,8 @@ using HighLife.StreamAnnouncer.Domain.Entitites;
 using HighLife.StreamAnnouncer.Domain.Settings;
 using HighLife.StreamAnnouncer.Repository;
 using HighLife.StreamAnnouncer.Service.Discord;
+using HighLife.StreamAnnouncer.Service.Discord.Commands;
+using HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,19 +15,24 @@ namespace HighLife.Runner
 {
     public class Worker : BackgroundService
     {
+        private readonly CommandHandler _commandHandler;
         private readonly IDiscordBot _discordBot;
         private readonly DiscordSocketClient _discordSocketClient;
         private readonly ILogger<Worker> _logger;
         private readonly Settings _settings;
+        private readonly IStreamAnnouncer _streamAnnouncer;
         private readonly IDataStoreRepository<Streamer> _streamerRepository;
 
         public Worker(ILogger<Worker> logger, IOptions<Settings> settings, IDiscordBot discordBot,
-            DiscordSocketClient discordSocketClient, IDataStoreRepository<Streamer> streamerRepository)
+            DiscordSocketClient discordSocketClient, IDataStoreRepository<Streamer> streamerRepository,
+            IStreamAnnouncer streamAnnouncer, CommandHandler commandHandler)
         {
             _logger = logger;
             _discordBot = discordBot;
             _discordSocketClient = discordSocketClient;
             _streamerRepository = streamerRepository;
+            _streamAnnouncer = streamAnnouncer;
+            _commandHandler = commandHandler;
             _settings = settings.Value;
         }
 
@@ -39,6 +46,8 @@ namespace HighLife.Runner
             _discordSocketClient.Ready += () =>
             {
                 _logger.LogInformation("Discord client is ready");
+
+                _commandHandler.InstallCommandsAsync();
 
                 return Task.CompletedTask;
             };
@@ -54,6 +63,9 @@ namespace HighLife.Runner
 
             // Wait for all connectable services to be ready
             mre.WaitOne();
+
+            // Initialize modules
+
 
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }

@@ -8,7 +8,7 @@ using TwitchLib.Api.Helix.Models.Games;
 using TwitchLib.Api.Helix.Models.Streams;
 using TwitchLib.Api.Helix.Models.Users;
 
-namespace HighLife.StreamAnnouncer.Service.StreamAnnouncer
+namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 {
     public class StreamAnnouncer : IStreamAnnouncer
     {

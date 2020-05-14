@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using HighLife.StreamAnnouncer.Domain.Entitites;
 
-namespace HighLife.StreamAnnouncer.Service.StreamAnnouncer
+namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 {
     public interface IStreamAnnouncer
     {

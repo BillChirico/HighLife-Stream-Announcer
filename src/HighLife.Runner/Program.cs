@@ -1,8 +1,11 @@
 using System;
+using Discord.Commands;
 using Discord.WebSocket;
 using HighLife.StreamAnnouncer.Domain.Settings;
 using HighLife.StreamAnnouncer.Repository;
 using HighLife.StreamAnnouncer.Service.Discord;
+using HighLife.StreamAnnouncer.Service.Discord.Commands;
+using HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer;
 using HighLife.StreamAnnouncer.Service.Twitch;
 using JsonFlatFileDataStore;
 using Microsoft.Extensions.Configuration;
@@ -32,12 +35,16 @@ namespace HighLife.Runner
                     // Discord
                     services.AddSingleton<IDiscordBot, DiscordBot>();
                     services.AddSingleton<DiscordSocketClient>();
+                    services.AddSingleton<CommandService>();
+                    services.AddSingleton<CommandHandler>();
 
                     // Twitch Api
                     services.AddSingleton(provider =>
                         TwitchApiFactory.Create(
                             provider.GetRequiredService<IOptions<Settings>>().Value.TwitchClientId,
-                            provider.GetRequiredService<IOptions<Settings>>().Value.TwitchAccessToken));
+                            provider.GetRequiredService<IOptions<Settings>>().Value.TwitchClientSecret));
+
+                    services.AddSingleton<ITwitchApiHelper, TwitchApiHelper>();
 
                     // Database
                     services.AddSingleton<IDataStore>(new DataStore("Database.json", keyProperty: "id",
@@ -45,6 +52,11 @@ namespace HighLife.Runner
 
                     // Repositories
                     services.AddSingleton(typeof(IDataStoreRepository<>), typeof(DataStoreRepository<>));
+
+                    // Modules
+                    services
+                        .AddSingleton<IStreamAnnouncer, StreamAnnouncer.Service.Modules.StreamAnnouncer.StreamAnnouncer
+                        >();
                 });
         }
 

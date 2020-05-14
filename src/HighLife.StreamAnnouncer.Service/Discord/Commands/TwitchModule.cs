@@ -19,8 +19,7 @@ namespace HighLife.StreamAnnouncer.Service.Discord.Commands
 
         [Command("add")]
         [Summary("Adds a streamer to the database.")]
-        public async Task Add(
-            [Summary("The number to square.")] string twitchUsername, string tagLine)
+        public async Task Add(string twitchUsername, string tagLine)
         {
             IEnumerable<Streamer> streamers = _streamerRepository.GetCollection().AsQueryable();
 
@@ -37,7 +36,27 @@ namespace HighLife.StreamAnnouncer.Service.Discord.Commands
                 TagLine = tagLine
             });
 
-            await ReplyAsync($"Successfully added {twitchUsername}!");
+            await ReplyAsync($"Successfully added {twitchUsername} to the Live Check List");
+        }
+
+        [Command("remove")]
+        [Summary("Remove a streamer from the database.")]
+        public async Task Remove(string twitchUsername)
+        {
+            IEnumerable<Streamer> streamers = _streamerRepository.GetCollection().AsQueryable();
+
+            Streamer streamer = streamers.FirstOrDefault(s => s.Username == twitchUsername);
+
+            if (streamer == null)
+            {
+                await ReplyAsync("No streamer with that username is in the database!");
+
+                return;
+            }
+
+            _streamerRepository.Delete(streamer);
+
+            await ReplyAsync($"Successfully removed {twitchUsername} from the Live Check List");
         }
     }
 }

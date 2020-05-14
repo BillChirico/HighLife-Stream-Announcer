@@ -7,16 +7,13 @@
     <ItemGroup>
         <PackageReference Include="Discord.Net" Version="2.3.0-dev-20200425.1"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.1"/>
+        <PackageReference Include="Microsoft.Extensions.Options" Version="3.1.1"/>
         <PackageReference Include="TwitchLib.Api" Version="3.0.6-CI-20200107-060234"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\HighLife.StreamAnnouncer.Domain\HighLife.StreamAnnouncer.Domain.csproj"/>
         <ProjectReference Include="..\HighLife.StreamAnnouncer.Repository\HighLife.StreamAnnouncer.Repository.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Modules"/>
     </ItemGroup>
 
 </Project>

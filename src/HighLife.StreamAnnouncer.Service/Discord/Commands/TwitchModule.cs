@@ -36,7 +36,7 @@ namespace HighLife.StreamAnnouncer.Service.Discord.Commands
                 TagLine = tagLine
             });
 
-            await ReplyAsync($"Successfully added {twitchUsername} to the Live Check List");
+            await ReplyAsync($"Successfully added {twitchUsername} to the Live Check List!");
         }
 
         [Command("remove")]
@@ -56,7 +56,7 @@ namespace HighLife.StreamAnnouncer.Service.Discord.Commands
 
             _streamerRepository.Delete(streamer);
 
-            await ReplyAsync($"Successfully removed {twitchUsername} from the Live Check List");
+            await ReplyAsync($"Successfully removed {twitchUsername} from the Live Check List!");
         }
     }
 }

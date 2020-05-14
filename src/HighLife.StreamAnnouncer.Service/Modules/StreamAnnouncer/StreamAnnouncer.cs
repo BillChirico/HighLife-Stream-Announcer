@@ -1,34 +1,64 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using HighLife.StreamAnnouncer.Domain.Entitites;
+using HighLife.StreamAnnouncer.Domain.Settings;
+using HighLife.StreamAnnouncer.Repository;
 using HighLife.StreamAnnouncer.Service.Twitch;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using TwitchLib.Api.Helix.Models.Games;
 using TwitchLib.Api.Helix.Models.Streams;
 using TwitchLib.Api.Helix.Models.Users;
 
 namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 {
-    public class StreamAnnouncer : IStreamAnnouncer
+    public class StreamAnnouncer : IStreamAnnouncer, IModule
     {
         private readonly DiscordSocketClient _discordClient;
         private readonly ILogger<StreamAnnouncer> _logger;
+        private readonly Settings _settings;
+        private readonly IDataStoreRepository<Streamer> _streamerRepository;
         private readonly ITwitchApiHelper _twitchApiHelper;
 
         public StreamAnnouncer(DiscordSocketClient discordClient, ITwitchApiHelper twitchApiHelper,
-            ILogger<StreamAnnouncer> logger)
+            ILogger<StreamAnnouncer> logger, IDataStoreRepository<Streamer> streamerRepository,
+            IOptions<Settings> settings)
         {
             _discordClient = discordClient;
             _twitchApiHelper = twitchApiHelper;
             _logger = logger;
+            _streamerRepository = streamerRepository;
+            _settings = settings.Value;
         }
 
-        public async Task Announce(Streamer streamer, ulong guildId, ulong channelId)
+        public async Task Init()
+        {
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    IEnumerable<Streamer> collection = _streamerRepository.GetCollection().AsQueryable();
+
+                    List<Streamer> streamers = collection.ToList();
+
+                    foreach (Streamer streamer in streamers)
+                    {
+                        await Announce(streamer);
+                    }
+
+                    await Task.Delay(TimeSpan.FromMinutes(1));
+                }
+            });
+        }
+
+        public async Task Announce(Streamer streamer)
         {
             try
             {
-                SocketGuild guild = _discordClient.GetGuild(guildId);
+                SocketGuild guild = _discordClient.GetGuild(_settings.DiscordGuildId);
 
                 if (guild == null)
                 {
@@ -37,11 +67,11 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                     return;
                 }
 
-                SocketTextChannel channel = guild.GetTextChannel(channelId);
+                SocketTextChannel channel = guild.GetTextChannel(_settings.DiscordChannelId);
 
                 if (channel == null)
                 {
-                    _logger.LogError($"Could not find channel (ID = {channelId}) to announce stream!");
+                    _logger.LogError($"Could not find channel (ID = {_settings.DiscordChannelId}) to announce stream!");
 
                     return;
                 }

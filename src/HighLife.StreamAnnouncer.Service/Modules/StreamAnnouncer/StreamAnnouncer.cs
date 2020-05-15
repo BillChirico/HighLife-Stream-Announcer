@@ -1,7 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord;
 using Discord.WebSocket;
 using HighLife.StreamAnnouncer.Domain.Entitites;
 using HighLife.StreamAnnouncer.Domain.Settings;
@@ -9,14 +9,12 @@ using HighLife.StreamAnnouncer.Repository;
 using HighLife.StreamAnnouncer.Service.Twitch;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using TwitchLib.Api.Helix.Models.Games;
-using TwitchLib.Api.Helix.Models.Streams;
-using TwitchLib.Api.Helix.Models.Users;
 
 namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 {
     public class StreamAnnouncer : IStreamAnnouncer, IModule
     {
+        private readonly IDataStoreRepository<AnnouncementMessages> _announcementMessageRepository;
         private readonly DiscordSocketClient _discordClient;
         private readonly ILogger<StreamAnnouncer> _logger;
         private readonly Settings _settings;
@@ -25,26 +23,29 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 
         public StreamAnnouncer(DiscordSocketClient discordClient, ITwitchApiHelper twitchApiHelper,
             ILogger<StreamAnnouncer> logger, IDataStoreRepository<Streamer> streamerRepository,
-            IOptions<Settings> settings)
+            IOptions<Settings> settings, IDataStoreRepository<AnnouncementMessages> announcementMessageRepository)
         {
             _discordClient = discordClient;
             _twitchApiHelper = twitchApiHelper;
             _logger = logger;
             _streamerRepository = streamerRepository;
+            _announcementMessageRepository = announcementMessageRepository;
             _settings = settings.Value;
         }
 
         public async Task Init()
         {
+            _logger.LogInformation("Initializing Stream Announcer");
+
             Task.Run(async () =>
             {
                 while (true)
                 {
-                    IEnumerable<Streamer> collection = _streamerRepository.GetCollection().AsQueryable();
+                    var collection = _streamerRepository.GetCollection().AsQueryable();
 
-                    List<Streamer> streamers = collection.ToList();
+                    var streamers = collection.ToList();
 
-                    foreach (Streamer streamer in streamers)
+                    foreach (var streamer in streamers)
                     {
                         await Announce(streamer);
                     }
@@ -58,7 +59,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
         {
             try
             {
-                SocketGuild guild = _discordClient.GetGuild(_settings.DiscordGuildId);
+                var guild = _discordClient.GetGuild(_settings.DiscordGuildId);
 
                 if (guild == null)
                 {
@@ -67,7 +68,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                     return;
                 }
 
-                SocketTextChannel channel = guild.GetTextChannel(_settings.DiscordChannelId);
+                var channel = guild.GetTextChannel(_settings.DiscordChannelId);
 
                 if (channel == null)
                 {
@@ -76,21 +77,34 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                     return;
                 }
 
-                User user = await _twitchApiHelper.GetUser(streamer.Username);
+                var user = await _twitchApiHelper.GetUser(streamer.Username);
 
                 if (user == null)
                 {
                     return;
                 }
 
-                Stream stream = await _twitchApiHelper.GetStream(user);
+                var stream = await _twitchApiHelper.GetStream(user);
+
+                var announcementMessage = _announcementMessageRepository.GetCollection().AsQueryable()
+                    .FirstOrDefault(am => am.Streamer.Id == streamer.Id);
+
+                if (announcementMessage != null)
+                {
+                    if (stream == null)
+                    {
+                        await (await channel.GetMessageAsync(announcementMessage.MessageId)).DeleteAsync();
+                    }
+
+                    return;
+                }
 
                 if (stream == null)
                 {
                     return;
                 }
 
-                Game game = await _twitchApiHelper.GetStreamGame(stream);
+                var game = await _twitchApiHelper.GetStreamGame(stream);
 
                 if (game == null)
                 {
@@ -102,7 +116,22 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                     return;
                 }
 
-                await channel.SendMessageAsync($"{streamer.Username} is now live!");
+                var embed = new EmbedBuilder()
+                    .WithTitle($"{user.DisplayName} is now live!")
+                    .WithDescription($"[Twitch](https://twitch.tv/{user.Login})")
+                    .WithColor(new Color(0x4A90E2))
+                    .WithThumbnailUrl(user.ProfileImageUrl)
+                    .AddField("Title", stream.Title, true).Build();
+
+                var message = await channel.SendMessageAsync(string.Empty, embed: embed);
+
+                _logger.LogInformation($"Successfully announced streamer [{streamer.Username}]");
+
+                await _announcementMessageRepository.Add(new AnnouncementMessages
+                {
+                    MessageId = message.Id,
+                    Streamer = streamer
+                });
             }
             catch (Exception exception)
             {

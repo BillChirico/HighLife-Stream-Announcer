@@ -3,7 +3,7 @@ using HighLife.StreamAnnouncer.Domain.Entitites;
 
 namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 {
-    public interface IStreamAnnouncer
+    public interface IStreamAnnouncer : IModule
     {
         /// <summary>
         ///     Announce the streamer to the guild and channel specified in the settings.

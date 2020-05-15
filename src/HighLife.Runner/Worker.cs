@@ -39,17 +39,18 @@ namespace HighLife.Runner
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             // Reset event
-            ManualResetEvent mre = new ManualResetEvent(false);
+            var mre = new ManualResetEvent(false);
 
             await _discordBot.Connect(_settings.DiscordBotToken);
 
-            _discordSocketClient.Ready += () =>
+            _discordSocketClient.Ready += async () =>
             {
                 _logger.LogInformation("Discord client is ready");
 
-                _commandHandler.InstallCommandsAsync();
+                await _commandHandler.InstallCommandsAsync();
 
-                return Task.CompletedTask;
+                // Initialize modules
+                await _streamAnnouncer.Init();
             };
 
             _discordSocketClient.GuildAvailable += guild =>
@@ -63,9 +64,6 @@ namespace HighLife.Runner
 
             // Wait for all connectable services to be ready
             mre.WaitOne();
-
-            // Initialize modules
-
 
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }

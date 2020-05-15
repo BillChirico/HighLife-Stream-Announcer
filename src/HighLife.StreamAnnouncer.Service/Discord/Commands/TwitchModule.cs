@@ -1,8 +1,7 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord.Commands;
-using HighLife.StreamAnnouncer.Domain.Entitites;
+using HighLife.StreamAnnouncer.Domain.Entities;
 using HighLife.StreamAnnouncer.Repository;
 
 namespace HighLife.StreamAnnouncer.Service.Discord.Commands
@@ -21,7 +20,7 @@ namespace HighLife.StreamAnnouncer.Service.Discord.Commands
         [Summary("Adds a streamer to the database.")]
         public async Task Add(string twitchUsername, string tagLine)
         {
-            IEnumerable<Streamer> streamers = _streamerRepository.GetCollection().AsQueryable();
+            var streamers = _streamerRepository.GetCollection().AsQueryable();
 
             if (streamers.FirstOrDefault(s => s.Username == twitchUsername) != null)
             {
@@ -43,9 +42,9 @@ namespace HighLife.StreamAnnouncer.Service.Discord.Commands
         [Summary("Remove a streamer from the database.")]
         public async Task Remove(string twitchUsername)
         {
-            IEnumerable<Streamer> streamers = _streamerRepository.GetCollection().AsQueryable();
+            var streamers = _streamerRepository.GetCollection().AsQueryable();
 
-            Streamer streamer = streamers.FirstOrDefault(s => s.Username == twitchUsername);
+            var streamer = streamers.FirstOrDefault(s => s.Username == twitchUsername);
 
             if (streamer == null)
             {

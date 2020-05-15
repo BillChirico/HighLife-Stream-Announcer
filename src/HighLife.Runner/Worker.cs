@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Discord.WebSocket;
-using HighLife.StreamAnnouncer.Domain.Entitites;
+using HighLife.StreamAnnouncer.Domain.Entities;
 using HighLife.StreamAnnouncer.Domain.Settings;
 using HighLife.StreamAnnouncer.Repository;
 using HighLife.StreamAnnouncer.Service.Discord;

@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using HighLife.StreamAnnouncer.Domain.Entitites;
+using HighLife.StreamAnnouncer.Domain.Entities;
 
 namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 {

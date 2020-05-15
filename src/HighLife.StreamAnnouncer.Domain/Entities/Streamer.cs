@@ -1,4 +1,4 @@
-namespace HighLife.StreamAnnouncer.Domain.Entitites
+namespace HighLife.StreamAnnouncer.Domain.Entities
 {
     public class Streamer : Entity
     {

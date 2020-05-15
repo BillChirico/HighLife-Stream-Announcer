@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using HighLife.StreamAnnouncer.Domain.Entitites;
+using HighLife.StreamAnnouncer.Domain.Entities;
 using HighLife.StreamAnnouncer.Domain.Settings;
 using HighLife.StreamAnnouncer.Repository;
 using HighLife.StreamAnnouncer.Service.Twitch;
@@ -118,7 +118,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 
                 var embed = new EmbedBuilder()
                     .WithTitle($"{user.DisplayName} is now live!")
-                    .WithDescription($"[Twitch](https://twitch.tv/{user.Login})")
+                    .WithDescription($"https://twitch.tv/{user.Login}")
                     .WithColor(new Color(0x4A90E2))
                     .WithThumbnailUrl(user.ProfileImageUrl)
                     .AddField("Title", stream.Title, true).Build();

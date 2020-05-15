@@ -18,7 +18,7 @@ namespace HighLife.StreamAnnouncer.Service.Discord.Commands
 
         [Command("add")]
         [Summary("Adds a streamer to the database.")]
-        public async Task Add(string twitchUsername, string tagLine)
+        public async Task Add(string twitchUsername, [Remainder] string tagLine)
         {
             var streamers = _streamerRepository.GetCollection().AsQueryable();
 
@@ -31,8 +31,7 @@ namespace HighLife.StreamAnnouncer.Service.Discord.Commands
 
             await _streamerRepository.Add(new Streamer
             {
-                Username = twitchUsername,
-                TagLine = tagLine
+                Username = twitchUsername, TagLine = tagLine
             });
 
             await ReplyAsync($"Successfully added {twitchUsername} to the Live Check List!");

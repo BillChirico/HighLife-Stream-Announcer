@@ -1,9 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Discord.WebSocket;
-using HighLife.StreamAnnouncer.Domain.Entities;
 using HighLife.StreamAnnouncer.Domain.Settings;
-using HighLife.StreamAnnouncer.Repository;
 using HighLife.StreamAnnouncer.Service.Discord;
 using HighLife.StreamAnnouncer.Service.Discord.Commands;
 using HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer;
@@ -21,16 +19,14 @@ namespace HighLife.Runner
         private readonly ILogger<Worker> _logger;
         private readonly Settings _settings;
         private readonly IStreamAnnouncer _streamAnnouncer;
-        private readonly IDataStoreRepository<Streamer> _streamerRepository;
 
         public Worker(ILogger<Worker> logger, IOptions<Settings> settings, IDiscordBot discordBot,
-            DiscordSocketClient discordSocketClient, IDataStoreRepository<Streamer> streamerRepository,
+            DiscordSocketClient discordSocketClient,
             IStreamAnnouncer streamAnnouncer, CommandHandler commandHandler)
         {
             _logger = logger;
             _discordBot = discordBot;
             _discordSocketClient = discordSocketClient;
-            _streamerRepository = streamerRepository;
             _streamAnnouncer = streamAnnouncer;
             _commandHandler = commandHandler;
             _settings = settings.Value;

@@ -9,6 +9,8 @@ using HighLife.StreamAnnouncer.Repository;
 using HighLife.StreamAnnouncer.Service.Twitch;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using TwitchLib.Api.Helix.Models.Streams;
+using TwitchLib.Api.Helix.Models.Users;
 
 namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 {
@@ -50,7 +52,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                         await Announce(streamer);
                     }
 
-                    await Task.Delay(TimeSpan.FromMinutes(1));
+                    await Task.Delay(TimeSpan.FromSeconds(10));
                 }
             });
         }
@@ -93,7 +95,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                 {
                     if (stream == null)
                     {
-                        await (await channel.GetMessageAsync(announcementMessage.MessageId)).DeleteAsync();
+                        await RemoveLiveMessage(channel, announcementMessage);
                     }
 
                     return;
@@ -101,6 +103,13 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 
                 if (stream == null)
                 {
+                    return;
+                }
+
+                if (!stream.Title.Contains("HighLifeRP", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    await RemoveLiveMessage(channel, announcementMessage);
+
                     return;
                 }
 
@@ -116,12 +125,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                     return;
                 }
 
-                var embed = new EmbedBuilder()
-                    .WithTitle($"{user.DisplayName} is now live!")
-                    .WithDescription($"https://twitch.tv/{user.Login}")
-                    .WithColor(new Color(0x4A90E2))
-                    .WithThumbnailUrl(user.ProfileImageUrl)
-                    .AddField("Title", stream.Title, true).Build();
+                var embed = LiveMessageEmbedBuilder(streamer, user, stream);
 
                 var message = await channel.SendMessageAsync(string.Empty, embed: embed);
 
@@ -129,14 +133,36 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 
                 await _announcementMessageRepository.Add(new AnnouncementMessages
                 {
-                    MessageId = message.Id,
-                    Streamer = streamer
+                    MessageId = message.Id, Streamer = streamer
                 });
             }
             catch (Exception exception)
             {
-                _logger.LogError(exception, $"Error occured while announcing streams: {exception}");
+                _logger.LogError(exception,
+                    $"Error occured while announcing streamer [{streamer.Username}]: {exception}");
             }
+        }
+
+        private static async Task RemoveLiveMessage(SocketTextChannel channel, AnnouncementMessages announcementMessage)
+        {
+            await (await channel.GetMessageAsync(announcementMessage.MessageId)).DeleteAsync();
+        }
+
+        private static Embed LiveMessageEmbedBuilder(Streamer streamer, User user, Stream stream)
+        {
+            var builder = new EmbedBuilder()
+                .WithDescription(streamer.TagLine)
+                .WithColor(new Color(0xD7CB))
+                .WithThumbnailUrl(user.ProfileImageUrl)
+                .WithAuthor(author =>
+                {
+                    author
+                        .WithName(user.DisplayName)
+                        .WithUrl($"https://twitch.tv/{user.Login}");
+                })
+                .AddField("Title", stream.Title);
+
+            return builder.Build();
         }
     }
 }

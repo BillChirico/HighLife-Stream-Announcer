@@ -5,5 +5,7 @@ namespace HighLife.StreamAnnouncer.Domain.Entities
         public string Username { get; set; }
 
         public string TagLine { get; set; }
+
+        public string HexColor { get; set; }
     }
 }

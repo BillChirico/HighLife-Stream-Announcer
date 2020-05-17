@@ -14,18 +14,21 @@ namespace HighLife.StreamAnnouncer.Repository
             _db = db;
         }
 
+        /// <inheritdoc />
         public IDocumentCollection<T> GetCollection()
         {
             return _db.GetCollection<T>();
         }
 
-        public IEnumerable<T> Get(int id)
+        /// <inheritdoc />
+        public IEnumerable<T> GetById(int id)
         {
             var collection = _db.GetCollection<T>();
 
             return collection.Find(item => item.Id == id);
         }
 
+        /// <inheritdoc />
         public async Task<T> Add(T item)
         {
             var collection = _db.GetCollection<T>();
@@ -35,6 +38,7 @@ namespace HighLife.StreamAnnouncer.Repository
             return item;
         }
 
+        /// <inheritdoc />
         public async void Delete(T item)
         {
             var collection = _db.GetCollection<T>();
@@ -42,6 +46,7 @@ namespace HighLife.StreamAnnouncer.Repository
             await collection.DeleteOneAsync(item);
         }
 
+        /// <inheritdoc />
         public async Task<T> Update(T item)
         {
             var collection = _db.GetCollection<T>();

@@ -18,7 +18,7 @@ namespace HighLife.StreamAnnouncer.Service.Discord.Commands
 
         [Command("add")]
         [Summary("Adds a streamer to the database.")]
-        public async Task Add(string twitchUsername, string hexColor, [Remainder] string tagLine)
+        public async Task Add(string twitchUsername, uint hexColor, [Remainder] string tagLine)
         {
             var streamers = _streamerRepository.GetCollection().AsQueryable();
 
@@ -61,7 +61,7 @@ namespace HighLife.StreamAnnouncer.Service.Discord.Commands
 
         [Command("update")]
         [Summary("Updates a streamer in the database.")]
-        public async Task Update(string twitchUsername, string hexColor, [Remainder] string tagLine)
+        public async Task Update(string twitchUsername, uint hexColor, [Remainder] string tagLine)
         {
             var streamers = _streamerRepository.GetCollection().AsQueryable();
 

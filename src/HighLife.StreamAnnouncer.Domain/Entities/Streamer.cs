@@ -6,6 +6,6 @@ namespace HighLife.StreamAnnouncer.Domain.Entities
 
         public string TagLine { get; set; }
 
-        public string HexColor { get; set; }
+        public uint HexColor { get; set; }
     }
 }

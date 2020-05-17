@@ -133,7 +133,8 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 
                 await _announcementMessageRepository.Add(new AnnouncementMessages
                 {
-                    MessageId = message.Id, Streamer = streamer
+                    MessageId = message.Id,
+                    Streamer = streamer
                 });
             }
             catch (Exception exception)
@@ -152,7 +153,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
         {
             var builder = new EmbedBuilder()
                 .WithDescription(streamer.TagLine)
-                .WithColor(new Color(0xD7CB))
+                .WithColor(new Color(streamer.HexColor))
                 .WithThumbnailUrl(user.ProfileImageUrl)
                 .WithAuthor(author =>
                 {

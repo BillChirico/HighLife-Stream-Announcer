@@ -144,9 +144,17 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
             }
         }
 
-        private static async Task RemoveLiveMessage(SocketTextChannel channel, AnnouncementMessages announcementMessage)
+        private async Task RemoveLiveMessage(SocketTextChannel channel, AnnouncementMessages announcementMessage)
         {
-            await (await channel.GetMessageAsync(announcementMessage.MessageId)).DeleteAsync();
+            try
+            {
+                await (await channel.GetMessageAsync(announcementMessage.MessageId)).DeleteAsync();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(
+                    $"Could not remove announcement message for [{announcementMessage.Streamer.Username}]");
+            }
         }
 
         private static Embed LiveMessageEmbedBuilder(Streamer streamer, User user, Stream stream)

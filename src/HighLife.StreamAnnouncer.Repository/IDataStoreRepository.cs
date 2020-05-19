@@ -29,7 +29,7 @@ namespace HighLife.StreamAnnouncer.Repository
         ///     Delete an entity from the database.
         /// </summary>
         /// <param name="item">Entity to delete.</param>
-        void Delete(T item);
+        Task Delete(T item);
 
         /// <summary>
         ///     Updates an entity in the database.

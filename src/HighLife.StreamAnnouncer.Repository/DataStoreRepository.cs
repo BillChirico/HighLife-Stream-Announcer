@@ -39,11 +39,11 @@ namespace HighLife.StreamAnnouncer.Repository
         }
 
         /// <inheritdoc />
-        public async void Delete(T item)
+        public async Task Delete(T item)
         {
             var collection = _db.GetCollection<T>();
 
-            await collection.DeleteOneAsync(item);
+            await collection.DeleteOneAsync(item.Id);
         }
 
         /// <inheritdoc />

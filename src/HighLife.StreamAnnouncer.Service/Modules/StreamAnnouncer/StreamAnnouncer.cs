@@ -150,6 +150,8 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
             try
             {
                 await (await channel.GetMessageAsync(announcementMessage.MessageId)).DeleteAsync();
+
+                await _announcementMessageRepository.Delete(announcementMessage);
             }
             catch (Exception e)
             {

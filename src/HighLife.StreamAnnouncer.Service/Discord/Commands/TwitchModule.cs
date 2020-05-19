@@ -54,7 +54,7 @@ namespace HighLife.StreamAnnouncer.Service.Discord.Commands
                 return;
             }
 
-            _streamerRepository.Delete(streamer);
+            await _streamerRepository.Delete(streamer);
 
             await ReplyAsync($"Successfully removed {twitchUsername} from the Live Check List!");
         }

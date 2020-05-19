@@ -17,10 +17,10 @@ namespace HighLife.Runner
         private readonly IDiscordBot _discordBot;
         private readonly DiscordSocketClient _discordSocketClient;
         private readonly ILogger<Worker> _logger;
-        private readonly Settings _settings;
+        private readonly ConfigSettings _configSettings;
         private readonly IStreamAnnouncer _streamAnnouncer;
 
-        public Worker(ILogger<Worker> logger, IOptions<Settings> settings, IDiscordBot discordBot,
+        public Worker(ILogger<Worker> logger, IOptions<ConfigSettings> settings, IDiscordBot discordBot,
             DiscordSocketClient discordSocketClient,
             IStreamAnnouncer streamAnnouncer, CommandHandler commandHandler)
         {
@@ -29,7 +29,7 @@ namespace HighLife.Runner
             _discordSocketClient = discordSocketClient;
             _streamAnnouncer = streamAnnouncer;
             _commandHandler = commandHandler;
-            _settings = settings.Value;
+            _configSettings = settings.Value;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,7 +37,7 @@ namespace HighLife.Runner
             // Reset event
             var mre = new ManualResetEvent(false);
 
-            await _discordBot.Connect(_settings.DiscordBotToken);
+            await _discordBot.Connect(_configSettings.DiscordBotToken);
 
             _discordSocketClient.Ready += async () =>
             {

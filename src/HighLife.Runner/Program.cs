@@ -30,7 +30,7 @@ namespace HighLife.Runner
                     services.AddHostedService<Worker>();
 
                     // Settings
-                    services.Configure<Settings>(GetSettingsFile("appsettings.json", "Settings"));
+                    services.Configure<ConfigSettings>(GetSettingsFile("appsettings.json", "Settings"));
 
                     // Discord
                     services.AddSingleton<IDiscordBot, DiscordBot>();
@@ -41,8 +41,8 @@ namespace HighLife.Runner
                     // Twitch Api
                     services.AddSingleton(provider =>
                         TwitchApiFactory.Create(
-                            provider.GetRequiredService<IOptions<Settings>>().Value.TwitchClientId,
-                            provider.GetRequiredService<IOptions<Settings>>().Value.TwitchClientSecret));
+                            provider.GetRequiredService<IOptions<ConfigSettings>>().Value.TwitchClientId,
+                            provider.GetRequiredService<IOptions<ConfigSettings>>().Value.TwitchClientSecret));
 
                     services.AddSingleton<ITwitchApiHelper, TwitchApiHelper>();
 
@@ -62,7 +62,7 @@ namespace HighLife.Runner
 
         private static IConfigurationSection GetSettingsFile(string file, string section)
         {
-            ConfigurationBuilder builder = new ConfigurationBuilder();
+            var builder = new ConfigurationBuilder();
 
             builder
                 .AddJsonFile(
@@ -71,7 +71,7 @@ namespace HighLife.Runner
                         : "appsettings.Development.json", false,
                     true);
 
-            IConfigurationRoot configuration = builder.Build();
+            var configuration = builder.Build();
 
             return configuration.GetSection(section);
         }

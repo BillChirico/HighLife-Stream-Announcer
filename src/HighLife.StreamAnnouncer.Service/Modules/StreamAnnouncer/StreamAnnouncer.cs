@@ -19,20 +19,20 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
         private readonly IDataStoreRepository<AnnouncementMessages> _announcementMessageRepository;
         private readonly DiscordSocketClient _discordClient;
         private readonly ILogger<StreamAnnouncer> _logger;
-        private readonly Settings _settings;
+        private readonly ConfigSettings _configSettings;
         private readonly IDataStoreRepository<Streamer> _streamerRepository;
         private readonly ITwitchApiHelper _twitchApiHelper;
 
         public StreamAnnouncer(DiscordSocketClient discordClient, ITwitchApiHelper twitchApiHelper,
             ILogger<StreamAnnouncer> logger, IDataStoreRepository<Streamer> streamerRepository,
-            IOptions<Settings> settings, IDataStoreRepository<AnnouncementMessages> announcementMessageRepository)
+            IOptions<ConfigSettings> settings, IDataStoreRepository<AnnouncementMessages> announcementMessageRepository)
         {
             _discordClient = discordClient;
             _twitchApiHelper = twitchApiHelper;
             _logger = logger;
             _streamerRepository = streamerRepository;
             _announcementMessageRepository = announcementMessageRepository;
-            _settings = settings.Value;
+            _configSettings = settings.Value;
         }
 
         public async Task Init()
@@ -61,7 +61,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
         {
             try
             {
-                var guild = _discordClient.GetGuild(_settings.DiscordGuildId);
+                var guild = _discordClient.GetGuild(_configSettings.DiscordGuildId);
 
                 if (guild == null)
                 {
@@ -70,11 +70,12 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                     return;
                 }
 
-                var channel = guild.GetTextChannel(_settings.DiscordChannelId);
+                var channel = guild.GetTextChannel(_configSettings.DiscordChannelId);
 
                 if (channel == null)
                 {
-                    _logger.LogError($"Could not find channel (ID = {_settings.DiscordChannelId}) to announce stream!");
+                    _logger.LogError(
+                        $"Could not find channel (ID = {_configSettings.DiscordChannelId}) to announce stream!");
 
                     return;
                 }

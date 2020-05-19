@@ -1,6 +1,6 @@
 ﻿namespace HighLife.StreamAnnouncer.Domain.Settings
 {
-    public class Settings
+    public class ConfigSettings
     {
         public string DiscordBotToken { get; set; }
 

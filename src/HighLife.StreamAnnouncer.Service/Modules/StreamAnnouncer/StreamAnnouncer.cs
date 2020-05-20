@@ -46,7 +46,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
             {
                 while (true)
                 {
-                    _logger.LogInformation("Starting stream announcements");
+                    _logger.LogDebug("Starting stream announcements");
 
                     var collection = _streamerRepository.GetCollection().AsQueryable();
 
@@ -57,7 +57,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                         await Announce(streamer);
                     }
 
-                    _logger.LogInformation("Finished stream announcements");
+                    _logger.LogDebug("Finished stream announcements");
 
                     await Task.Delay(TimeSpan.FromSeconds(10));
                 }

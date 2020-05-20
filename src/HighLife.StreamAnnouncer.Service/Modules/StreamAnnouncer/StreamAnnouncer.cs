@@ -17,21 +17,24 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
     public class StreamAnnouncer : IStreamAnnouncer, IModule
     {
         private readonly IDataStoreRepository<AnnouncementMessages> _announcementMessageRepository;
-        private readonly DiscordSocketClient _discordClient;
-        private readonly ILogger<StreamAnnouncer> _logger;
         private readonly ConfigSettings _configSettings;
+        private readonly DiscordSocketClient _discordClient;
+        private readonly IDataStoreRepository<DiscordSettings> _discordSettingsRepository;
+        private readonly ILogger<StreamAnnouncer> _logger;
         private readonly IDataStoreRepository<Streamer> _streamerRepository;
         private readonly ITwitchApiHelper _twitchApiHelper;
 
         public StreamAnnouncer(DiscordSocketClient discordClient, ITwitchApiHelper twitchApiHelper,
             ILogger<StreamAnnouncer> logger, IDataStoreRepository<Streamer> streamerRepository,
-            IOptions<ConfigSettings> settings, IDataStoreRepository<AnnouncementMessages> announcementMessageRepository)
+            IOptions<ConfigSettings> settings, IDataStoreRepository<AnnouncementMessages> announcementMessageRepository,
+            IDataStoreRepository<DiscordSettings> discordSettingsRepository)
         {
             _discordClient = discordClient;
             _twitchApiHelper = twitchApiHelper;
             _logger = logger;
             _streamerRepository = streamerRepository;
             _announcementMessageRepository = announcementMessageRepository;
+            _discordSettingsRepository = discordSettingsRepository;
             _configSettings = settings.Value;
         }
 
@@ -43,6 +46,8 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
             {
                 while (true)
                 {
+                    _logger.LogInformation("Starting stream announcements");
+
                     var collection = _streamerRepository.GetCollection().AsQueryable();
 
                     var streamers = collection.ToList();
@@ -51,6 +56,8 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                     {
                         await Announce(streamer);
                     }
+
+                    _logger.LogInformation("Finished stream announcements");
 
                     await Task.Delay(TimeSpan.FromSeconds(10));
                 }
@@ -70,12 +77,22 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                     return;
                 }
 
-                var channel = guild.GetTextChannel(_configSettings.DiscordChannelId);
+                var channelId = _discordSettingsRepository.GetCollection().AsQueryable()
+                    .FirstOrDefault()?.DiscordChannelId;
+
+                if (channelId == null)
+                {
+                    _logger.LogError("There are no set channels to announce streams!");
+
+                    return;
+                }
+
+                var channel = guild.GetTextChannel(channelId.Value);
 
                 if (channel == null)
                 {
                     _logger.LogError(
-                        $"Could not find channel (ID = {_configSettings.DiscordChannelId}) to announce stream!");
+                        $"Could not find channel (ID = {channelId}) to announce stream!");
 
                     return;
                 }
@@ -94,7 +111,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 
                 if (announcementMessage != null)
                 {
-                    if (stream == null)
+                    if (stream == null || CheckStreamTitle(stream) || stream.GameId != TwitchConstants.GtaGameId)
                     {
                         await RemoveLiveMessage(channel, announcementMessage);
                     }
@@ -107,21 +124,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                     return;
                 }
 
-                if (!stream.Title.Contains("HighLifeRP", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    await RemoveLiveMessage(channel, announcementMessage);
-
-                    return;
-                }
-
-                var game = await _twitchApiHelper.GetStreamGame(stream);
-
-                if (game == null)
-                {
-                    return;
-                }
-
-                if (game.Name != "Grand Theft Auto V")
+                if (CheckStreamTitle(stream))
                 {
                     return;
                 }
@@ -130,13 +133,13 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 
                 var message = await channel.SendMessageAsync(string.Empty, embed: embed);
 
-                _logger.LogInformation($"Successfully announced streamer [{streamer.Username}]");
-
                 await _announcementMessageRepository.Add(new AnnouncementMessages
                 {
                     MessageId = message.Id,
                     Streamer = streamer
                 });
+
+                _logger.LogInformation($"Successfully announced streamer [{streamer.Username}]");
             }
             catch (Exception exception)
             {
@@ -145,13 +148,21 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
             }
         }
 
+        private static bool CheckStreamTitle(Stream stream)
+        {
+            return !stream.Title.Contains("HighLifeRP", StringComparison.InvariantCultureIgnoreCase);
+        }
+
         private async Task RemoveLiveMessage(SocketTextChannel channel, AnnouncementMessages announcementMessage)
         {
             try
             {
+                await _announcementMessageRepository.Delete(announcementMessage);
+
                 await (await channel.GetMessageAsync(announcementMessage.MessageId)).DeleteAsync();
 
-                await _announcementMessageRepository.Delete(announcementMessage);
+                _logger.LogInformation(
+                    $"Successfully removed announcement message for [{announcementMessage.Streamer.Username}]");
             }
             catch (Exception e)
             {

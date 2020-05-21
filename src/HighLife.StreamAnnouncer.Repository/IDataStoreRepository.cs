@@ -12,6 +12,12 @@ namespace HighLife.StreamAnnouncer.Repository
         IDocumentCollection<T> GetCollection();
 
         /// <summary>
+        ///     Gets all entities in the database.
+        /// </summary>
+        /// <returns></returns>
+        List<T> GetAll();
+
+        /// <summary>
         ///     Gets an entity by id from the database.
         /// </summary>
         /// <param name="id">Id of the entity to retrieve.</param>

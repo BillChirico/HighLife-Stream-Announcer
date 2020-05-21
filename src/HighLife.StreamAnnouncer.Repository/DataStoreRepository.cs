@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using HighLife.StreamAnnouncer.Domain.Entities;
 using JsonFlatFileDataStore;
@@ -18,6 +19,12 @@ namespace HighLife.StreamAnnouncer.Repository
         public IDocumentCollection<T> GetCollection()
         {
             return _db.GetCollection<T>();
+        }
+
+        /// <inheritdoc />
+        public List<T> GetAll()
+        {
+            return _db.GetCollection<T>().AsQueryable().ToList();
         }
 
         /// <inheritdoc />

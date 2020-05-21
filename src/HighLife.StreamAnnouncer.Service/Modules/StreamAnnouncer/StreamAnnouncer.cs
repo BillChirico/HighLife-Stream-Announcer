@@ -58,7 +58,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 
                     var liveStreamerIds = liveStreamers.Select(ls => ls.Id);
 
-                    var offlineStreamers = streamers.Where(s => !liveStreamerIds.Contains(s.Id));
+                    var offlineStreamers = streamers.Where(s => !liveStreamerIds.Contains(s.Id)).ToList();
 
                     await UpdatePinnedMessage(liveStreamers, offlineStreamers);
 
@@ -132,8 +132,8 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
             return liveStreamers;
         }
 
-        public async Task UpdatePinnedMessage(IEnumerable<Streamer> liveStreamers,
-            IEnumerable<Streamer> offlineStreamers)
+        public async Task UpdatePinnedMessage(List<Streamer> liveStreamers,
+            List<Streamer> offlineStreamers)
         {
             var channel = GetChannel(_discordSettingsRepository.GetAll().FirstOrDefault()?.DiscordChannelId);
 

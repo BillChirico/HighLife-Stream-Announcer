@@ -18,6 +18,6 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
         /// </summary>
         /// <param name="liveStreamers">Streamers that are live.</param>
         /// <param name="offlineStreamers">Streamers that are not live.</param>
-        Task UpdatePinnedMessage(IEnumerable<Streamer> liveStreamers, IEnumerable<Streamer> offlineStreamers);
+        Task UpdatePinnedMessage(List<Streamer> liveStreamers, List<Streamer> offlineStreamers);
     }
 }

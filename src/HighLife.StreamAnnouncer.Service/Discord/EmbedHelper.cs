@@ -27,32 +27,33 @@ namespace HighLife.StreamAnnouncer.Service.Discord
             return builder.Build();
         }
 
-        public static Embed PinnedMessageEmbedBuilder(IEnumerable<Streamer> liveStreamers,
-            IEnumerable<Streamer> offlineStreamers)
+        public static Embed PinnedMessageEmbedBuilder(List<Streamer> liveStreamers,
+            List<Streamer> offlineStreamers)
         {
             var builder = new EmbedBuilder()
-                .WithTitle("Content Creators")
+                .WithTitle("Official Content Creators")
                 .WithColor(Color.Blue)
                 .WithFooter(new EmbedFooterBuilder().WithText(
                     $"Last Update: {DateTime.UtcNow.ToShortTimeString()} UTC"));
 
-            // Online
-            var streamDescriptions = liveStreamers.Select(liveStreamer => GetPinnedMessageString(liveStreamer, true))
-                .ToList();
+            var onlineValue = liveStreamers.Any() ? string.Empty : "No Streamers Online";
+            var offlineValue = offlineStreamers.Any() ? string.Empty : "No Streamers Offline";
 
-            // Offline
-            streamDescriptions.AddRange(offlineStreamers.Select(offlineStreamer =>
-                GetPinnedMessageString(offlineStreamer)));
+            onlineValue = liveStreamers.Aggregate(onlineValue,
+                (current, liveStreamer) => current + GetPinnedMessageString(liveStreamer));
 
-            builder.WithDescription(string.Join(Environment.NewLine, streamDescriptions));
+            offlineValue = offlineStreamers.Aggregate(offlineValue,
+                (current, offlineStreamer) => current + GetPinnedMessageString(offlineStreamer));
+            builder.AddField(":green_circle:  Online Streamers", onlineValue);
+            builder.AddField(":red_circle:  Offline Streamers", offlineValue);
 
             return builder.Build();
         }
 
-        private static string GetPinnedMessageString(Streamer streamer, bool isLive = false)
+        private static string GetPinnedMessageString(Streamer streamer)
         {
             return
-                $"[{streamer.Username}](https://www.twitch.tv/{streamer.Username})         |    {(isLive ? ":green_circle:" : ":red_circle:")}";
+                $"[{streamer.Username}](https://www.twitch.tv/{streamer.Username})";
         }
     }
 }

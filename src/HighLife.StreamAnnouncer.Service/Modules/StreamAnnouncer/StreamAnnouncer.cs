@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord.Rest;
 using Discord.WebSocket;
 using HighLife.StreamAnnouncer.Domain.Entities;
 using HighLife.StreamAnnouncer.Domain.Settings;
@@ -20,8 +21,8 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
         private readonly ConfigSettings _configSettings;
         private readonly DiscordSocketClient _discordClient;
         private readonly IDataStoreRepository<DiscordSettings> _discordSettingsRepository;
-        private readonly IDataStoreRepository<PinnedMessage> _pinnedMessageRepository;
         private readonly ILogger<StreamAnnouncer> _logger;
+        private readonly IDataStoreRepository<PinnedMessage> _pinnedMessageRepository;
         private readonly IDataStoreRepository<Streamer> _streamerRepository;
         private readonly ITwitchApiHelper _twitchApiHelper;
 
@@ -131,6 +132,48 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
             return liveStreamers;
         }
 
+        public async Task UpdatePinnedMessage(IEnumerable<Streamer> liveStreamers,
+            IEnumerable<Streamer> offlineStreamers)
+        {
+            var channel = GetChannel(_discordSettingsRepository.GetAll().FirstOrDefault()?.DiscordChannelId);
+
+            if (channel == null)
+            {
+                return;
+            }
+
+            var pinnedMessageId = _pinnedMessageRepository.GetAll().FirstOrDefault()?.MessageId;
+
+            if (pinnedMessageId == null)
+            {
+                var newPinnedMessage = await channel.SendMessageAsync(string.Empty,
+                    embed: EmbedHelper.PinnedMessageEmbedBuilder(liveStreamers, offlineStreamers));
+
+                var newPinnedMessageId = await _pinnedMessageRepository.Add(new PinnedMessage
+                {
+                    MessageId = newPinnedMessage.Id
+                });
+
+                pinnedMessageId = newPinnedMessageId.MessageId;
+
+                _logger.LogDebug("Created new pinned message");
+            }
+
+
+            if (!(await channel.GetMessageAsync(pinnedMessageId.Value) is RestUserMessage pinnedMessage))
+            {
+                _logger.LogError("Could not find pinned message!");
+
+                return;
+            }
+
+            await pinnedMessage.ModifyAsync(msg =>
+            {
+                msg.Content = string.Empty;
+                msg.Embed = EmbedHelper.PinnedMessageEmbedBuilder(liveStreamers, offlineStreamers);
+            });
+        }
+
         private SocketTextChannel GetChannel(ulong? channelId)
         {
             var guild = _discordClient.GetGuild(_configSettings.DiscordGuildId);
@@ -160,38 +203,6 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                 $"Could not find channel (ID = {channelId}) to announce streams!");
 
             return null;
-        }
-
-        public async Task UpdatePinnedMessage(IEnumerable<Streamer> liveStreamers,
-            IEnumerable<Streamer> offlineStreamers)
-        {
-            var pinnedMessageId = _pinnedMessageRepository.GetAll().FirstOrDefault()?.MessageId;
-
-            if (pinnedMessageId == null)
-            {
-                _logger.LogError("There is no pinned message set!");
-
-                return;
-            }
-
-            var guild = _discordClient.GetGuild(_configSettings.DiscordGuildId);
-
-            if (guild == null)
-            {
-                _logger.LogError("Could not find guild to update pinned message!");
-
-                return;
-            }
-
-            var channel = guild.GetTextChannel(channelId.Value);
-
-            if (channel == null)
-            {
-                _logger.LogError(
-                    $"Could not find channel (ID = {channelId}) to announce stream!");
-
-                continue;
-            }
         }
 
         private static bool CheckStreamTitle(Stream stream)

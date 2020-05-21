@@ -37,16 +37,22 @@ namespace HighLife.StreamAnnouncer.Service.Discord
                     $"Last Update: {DateTime.UtcNow.ToShortTimeString()} UTC"));
 
             // Online
-            var streamDescriptions = liveStreamers.Select(liveStreamer => $"{liveStreamer.Username} | :green_circle:")
+            var streamDescriptions = liveStreamers.Select(liveStreamer => GetPinnedMessageString(liveStreamer, true))
                 .ToList();
 
             // Offline
-            streamDescriptions.AddRange(offlineStreamers.Select(liveStreamer =>
-                $"{liveStreamer.Username} | :red_circle:"));
+            streamDescriptions.AddRange(offlineStreamers.Select(offlineStreamer =>
+                GetPinnedMessageString(offlineStreamer)));
 
             builder.WithDescription(string.Join(Environment.NewLine, streamDescriptions));
 
             return builder.Build();
+        }
+
+        private static string GetPinnedMessageString(Streamer streamer, bool isLive = false)
+        {
+            return
+                $"[{streamer.Username}](https://www.twitch.tv/{streamer.Username})         |    {(isLive ? ":green_circle:" : ":red_circle:")}";
         }
     }
 }

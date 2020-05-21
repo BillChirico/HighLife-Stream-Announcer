@@ -1,16 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord;
 using Discord.WebSocket;
 using HighLife.StreamAnnouncer.Domain.Entities;
 using HighLife.StreamAnnouncer.Domain.Settings;
 using HighLife.StreamAnnouncer.Repository;
+using HighLife.StreamAnnouncer.Service.Discord;
 using HighLife.StreamAnnouncer.Service.Twitch;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TwitchLib.Api.Helix.Models.Streams;
-using TwitchLib.Api.Helix.Models.Users;
 
 namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
 {
@@ -20,6 +20,7 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
         private readonly ConfigSettings _configSettings;
         private readonly DiscordSocketClient _discordClient;
         private readonly IDataStoreRepository<DiscordSettings> _discordSettingsRepository;
+        private readonly IDataStoreRepository<PinnedMessage> _pinnedMessageRepository;
         private readonly ILogger<StreamAnnouncer> _logger;
         private readonly IDataStoreRepository<Streamer> _streamerRepository;
         private readonly ITwitchApiHelper _twitchApiHelper;
@@ -27,7 +28,8 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
         public StreamAnnouncer(DiscordSocketClient discordClient, ITwitchApiHelper twitchApiHelper,
             ILogger<StreamAnnouncer> logger, IDataStoreRepository<Streamer> streamerRepository,
             IOptions<ConfigSettings> settings, IDataStoreRepository<AnnouncementMessages> announcementMessageRepository,
-            IDataStoreRepository<DiscordSettings> discordSettingsRepository)
+            IDataStoreRepository<DiscordSettings> discordSettingsRepository,
+            IDataStoreRepository<PinnedMessage> pinnedMessageRepository)
         {
             _discordClient = discordClient;
             _twitchApiHelper = twitchApiHelper;
@@ -35,10 +37,11 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
             _streamerRepository = streamerRepository;
             _announcementMessageRepository = announcementMessageRepository;
             _discordSettingsRepository = discordSettingsRepository;
+            _pinnedMessageRepository = pinnedMessageRepository;
             _configSettings = settings.Value;
         }
 
-        public async Task Init()
+        public void Init()
         {
             _logger.LogInformation("Initializing Stream Announcer");
 
@@ -48,14 +51,15 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                 {
                     _logger.LogDebug("Starting stream announcements");
 
-                    var collection = _streamerRepository.GetCollection().AsQueryable();
+                    var streamers = _streamerRepository.GetAll();
 
-                    var streamers = collection.ToList();
+                    var liveStreamers = await Announce(streamers);
 
-                    foreach (var streamer in streamers)
-                    {
-                        await Announce(streamer);
-                    }
+                    var liveStreamerIds = liveStreamers.Select(ls => ls.Id);
+
+                    var offlineStreamers = streamers.Where(s => !liveStreamerIds.Contains(s.Id));
+
+                    await UpdatePinnedMessage(liveStreamers, offlineStreamers);
 
                     _logger.LogDebug("Finished stream announcements");
 
@@ -64,87 +68,129 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
             });
         }
 
-        public async Task Announce(Streamer streamer)
+        public async Task<List<Streamer>> Announce(IEnumerable<Streamer> streamers)
         {
-            try
+            var liveStreamers = new List<Streamer>();
+
+            foreach (var streamer in streamers)
             {
-                var guild = _discordClient.GetGuild(_configSettings.DiscordGuildId);
-
-                if (guild == null)
+                try
                 {
-                    _logger.LogError("Could not find guild to announce stream!");
+                    var channel = GetChannel(_discordSettingsRepository.GetAll().FirstOrDefault()?.DiscordChannelId);
 
-                    return;
-                }
+                    var user = await _twitchApiHelper.GetUser(streamer.Username);
 
-                var channelId = _discordSettingsRepository.GetCollection().AsQueryable()
-                    .FirstOrDefault()?.DiscordChannelId;
-
-                if (channelId == null)
-                {
-                    _logger.LogError("There are no set channels to announce streams!");
-
-                    return;
-                }
-
-                var channel = guild.GetTextChannel(channelId.Value);
-
-                if (channel == null)
-                {
-                    _logger.LogError(
-                        $"Could not find channel (ID = {channelId}) to announce stream!");
-
-                    return;
-                }
-
-                var user = await _twitchApiHelper.GetUser(streamer.Username);
-
-                if (user == null)
-                {
-                    return;
-                }
-
-                var stream = await _twitchApiHelper.GetStream(user);
-
-                var announcementMessage = _announcementMessageRepository.GetCollection().AsQueryable()
-                    .FirstOrDefault(am => am.Streamer.Id == streamer.Id);
-
-                if (announcementMessage != null)
-                {
-                    if (stream == null || CheckStreamTitle(stream) || stream.GameId != TwitchConstants.GtaGameId)
+                    if (user == null)
                     {
-                        await RemoveLiveMessage(channel, announcementMessage);
+                        continue;
                     }
 
-                    return;
+                    var stream = await _twitchApiHelper.GetStream(user);
+
+                    var announcementMessage = _announcementMessageRepository.GetAll()
+                        .FirstOrDefault(am => am.Streamer.Id == streamer.Id);
+
+                    if (announcementMessage != null)
+                    {
+                        if (stream == null || CheckStreamTitle(stream) || stream.GameId != TwitchConstants.GtaGameId)
+                        {
+                            await RemoveLiveMessage(channel, announcementMessage);
+                        }
+
+                        continue;
+                    }
+
+                    if (stream == null)
+                    {
+                        continue;
+                    }
+
+                    if (CheckStreamTitle(stream))
+                    {
+                        continue;
+                    }
+
+                    var message = await channel.SendMessageAsync(string.Empty,
+                        embed: EmbedHelper.LiveMessageEmbedBuilder(streamer, user, stream));
+
+                    await _announcementMessageRepository.Add(new AnnouncementMessages
+                    {
+                        MessageId = message.Id,
+                        Streamer = streamer
+                    });
+
+                    _logger.LogInformation($"Successfully announced streamer [{streamer.Username}]");
                 }
-
-                if (stream == null)
+                catch (Exception exception)
                 {
-                    return;
+                    _logger.LogError(exception,
+                        $"Error occured while announcing streamer [{streamer.Username}]: {exception}");
                 }
-
-                if (CheckStreamTitle(stream))
-                {
-                    return;
-                }
-
-                var embed = LiveMessageEmbedBuilder(streamer, user, stream);
-
-                var message = await channel.SendMessageAsync(string.Empty, embed: embed);
-
-                await _announcementMessageRepository.Add(new AnnouncementMessages
-                {
-                    MessageId = message.Id,
-                    Streamer = streamer
-                });
-
-                _logger.LogInformation($"Successfully announced streamer [{streamer.Username}]");
             }
-            catch (Exception exception)
+
+            return liveStreamers;
+        }
+
+        private SocketTextChannel GetChannel(ulong? channelId)
+        {
+            var guild = _discordClient.GetGuild(_configSettings.DiscordGuildId);
+
+            if (guild == null)
             {
-                _logger.LogError(exception,
-                    $"Error occured while announcing streamer [{streamer.Username}]: {exception}");
+                _logger.LogError("Could not find guild to announce streams!");
+
+                return null;
+            }
+
+            if (channelId == null)
+            {
+                _logger.LogError("There are no set channels to announce streams!");
+
+                return null;
+            }
+
+            var channel = guild.GetTextChannel(channelId.Value);
+
+            if (channel != null)
+            {
+                return channel;
+            }
+
+            _logger.LogError(
+                $"Could not find channel (ID = {channelId}) to announce streams!");
+
+            return null;
+        }
+
+        public async Task UpdatePinnedMessage(IEnumerable<Streamer> liveStreamers,
+            IEnumerable<Streamer> offlineStreamers)
+        {
+            var pinnedMessageId = _pinnedMessageRepository.GetAll().FirstOrDefault()?.MessageId;
+
+            if (pinnedMessageId == null)
+            {
+                _logger.LogError("There is no pinned message set!");
+
+                return;
+            }
+
+            var guild = _discordClient.GetGuild(_configSettings.DiscordGuildId);
+
+            if (guild == null)
+            {
+                _logger.LogError("Could not find guild to update pinned message!");
+
+                return;
+            }
+
+            var channel = guild.GetTextChannel(channelId.Value);
+
+            if (channel == null)
+            {
+                _logger.LogError(
+                    $"Could not find channel (ID = {channelId}) to announce stream!");
+
+                continue;
             }
         }
 
@@ -164,28 +210,11 @@ namespace HighLife.StreamAnnouncer.Service.Modules.StreamAnnouncer
                 _logger.LogInformation(
                     $"Successfully removed announcement message for [{announcementMessage.Streamer.Username}]");
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                _logger.LogError(
-                    $"Could not remove announcement message for [{announcementMessage.Streamer.Username}]");
+                _logger.LogError(exception,
+                    $"Could not remove announcement message for [{announcementMessage.Streamer.Username}]: {exception}");
             }
-        }
-
-        private static Embed LiveMessageEmbedBuilder(Streamer streamer, User user, Stream stream)
-        {
-            var builder = new EmbedBuilder()
-                .WithDescription(streamer.TagLine)
-                .WithColor(new Color(streamer.HexColor))
-                .WithThumbnailUrl(user.ProfileImageUrl)
-                .WithAuthor(author =>
-                {
-                    author
-                        .WithName(user.DisplayName)
-                        .WithUrl($"https://twitch.tv/{user.Login}");
-                })
-                .AddField("Title", stream.Title);
-
-            return builder.Build();
         }
     }
 }

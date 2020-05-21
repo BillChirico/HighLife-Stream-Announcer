@@ -46,7 +46,7 @@ namespace HighLife.Runner
                 await _commandHandler.InstallCommandsAsync();
 
                 // Initialize modules
-                await _streamAnnouncer.Init();
+                _streamAnnouncer.Init();
             };
 
             _discordSocketClient.GuildAvailable += guild =>

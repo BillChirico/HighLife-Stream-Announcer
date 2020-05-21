@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 namespace HighLife.StreamAnnouncer.Service.Modules
 {
     public interface IModule
@@ -7,6 +5,6 @@ namespace HighLife.StreamAnnouncer.Service.Modules
         /// <summary>
         ///     Initialize the Module.
         /// </summary>
-        Task Init();
+        void Init();
     }
 }
